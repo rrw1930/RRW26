@@ -1,0 +1,3166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能源智能诊断系统 - 水泵系统</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.5/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.5/vfs_fonts.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1890ff;
+            --secondary-color: #52c41a;
+            --warning-color: #faad14;
+            --error-color: #ff4d4f;
+            --background-color: #f0f2f5;
+            --card-color: #ffffff;
+            --text-dark: #333;
+            --text-light: #666;
+            --border-color: #e8e8e8;
+            --deepseek-color: #6e44ff;
+            --iot-color: #ff6b6b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #e6f7ff, #f0f2f5);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background: linear-gradient(90deg, #096dd9, var(--deepseek-color));
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .logo-badge {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .logo-badge span {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-color);
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--deepseek-color));
+            color: white;
+            padding: 18px 24px;
+            display:极 flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-header i {
+            font-size: 1.5rem;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .upload-section {
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: rgba(24, 144, 255, 0.05);
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            background-color: rgba(24, 144, 255, 0.1);
+            transform: scale(1.01);
+        }
+
+        .upload-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+        }
+
+        .upload-btn:hover {
+            background: #096dd9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(24, 144, 255, 0.4);
+        }
+
+        .iot-btn {
+            background: var(--iot-color);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10极px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .iot-btn:hover {
+            background: #e25757;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .config-area {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background-color: rgba(240, 242, 245, 0.5);
+        }
+
+        .config-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .config-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .config-group label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .config-group select, .config-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            font-size: 1rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background: white;
+        }
+
+        .data-table th {
+            background-color: #f5f7fa;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .data-table th, 
+        .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 14px 16px;
+        }
+
+        .data-table input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .data-table input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+        }
+
+        .action-btn {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .action-btn:hover {
+            background: #096dd9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .action-btn.secondary {
+            background: var(--secondary-color);
+        }
+
+        .action-btn.secondary:hover {
+            background: #389e0d;
+        }
+
+        .action-btn.deepseek {
+            background: var(--deepseek-color);
+        }
+
+        .action-btn.deepseek:hover {
+            background: #5a2de2;
+        }
+
+        .chart-container {
+            height: 600px;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .sankey-info {
+            background: #e6f7ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .sankey-info i {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .download-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            animation: slideIn 0.5s ease, fadeOut 0.5s ease 3s forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        .energy-chart-container {
+            height: 450px;
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: white;
+            border: 1px solid var(--border-color);
+        }
+        
+        .chart-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            background: #f5f7fa;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        .chart-tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .chart-tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .chart-tab:hover:not(.active) {
+            background: #e6f7ff;
+        }
+        
+        .chart-content {
+            padding: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+
+        .pump-diagram-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .pump-diagram-container h2 {
+            color: #1890ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .pump-diagram {
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .pump-diagram img {
+            max-width: 100%;
+            border-radius: 6px;
+        }
+        
+        .collapsible {
+            background-color: #f5f7fa;
+            color: #333;
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: 1px solid #e8e8e8;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.3s;
+        }
+        
+        .collapsible:after {
+            content: '\f078';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            float: right;
+            margin-left: 5px;
+        }
+        
+        .active:after {
+            content: "\f077";
+        }
+        
+        .collapsible:hover {
+            background-color: #e6f7ff;
+        }
+        
+        .content {
+            padding: 0 15px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: white;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #e8e8e8;
+            border-top: none;
+        }
+
+        .test-project-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .test-project-selector h2 {
+            text-align: center;
+            color: #1890ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .project-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .project-btn {
+            background: #f0f7ff;
+            border: 2px solid #bae0ff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 120px;
+            position: relative;
+        }
+        
+        .project-btn:hover {
+            background: #e6f7ff;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(24, 144, 255, 0.15);
+        }
+        
+        .project-btn.active {
+            background: linear-gradient(135deg, #1890ff, #096dd9);
+            color: white;
+            border-color: #1890ff;
+        }
+        
+        .project-btn i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        /* 配置菜单容器样式 */
+        .config-menu-container {
+            display: none;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 15px;
+            padding: 15px;
+        }
+        
+        .config-menu {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .config-menu-item {
+            padding: 10px 15px;
+            background: #f0f7ff;
+            border: 1px solid #bae0ff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .config-menu-item:hover {
+            background: #e6f7ff;
+            transform: translateY(-2px);
+        }
+        
+        .config-menu-item.add-feature {
+            background: linear-gradient(135deg, #ff6b6b, #ff9f43);
+            color: white;
+            border-color: #ff6b6b;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            z-index: 3000;
+            border-radius: 8px;
+            overflow: hidden;
+            top: 100%;
+            left: 0;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: #e6f7ff;
+        }
+        
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .dropdown-btn {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .dropdown-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .file-preview {
+            max-height: 300px;
+            overflow: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .file-preview table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .file-preview th {
+            background: #f0f7ff;
+            position: sticky;
+            top: 0;
+        }
+        
+        .file-preview th, .file-preview td {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+        }
+        
+        .file-preview tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .pump-curve-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .pump-curve-container h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .curve-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .curve-control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+        
+        .curve-control-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        
+        .curve-control-group input {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .curve-chart {
+            height: 400px;
+            border-radius: 8极px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        
+        .report-btn {
+            background: linear-gradient(135deg, var(--secondary-color), #389e0d);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
+        }
+        
+        .report-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(82, 196, 26, 0.4);
+        }
+
+        .bottom-button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        /* 配置模态框样式 */
+        .config-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            overflow: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: all 0.3s;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+            transform: rotate(90deg);
+        }
+        
+        .modal-header {
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e8e8e8;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .modal-header h2 {
+            color: #1890ff;
+        }
+        
+        .info-nav {
+            display: flex;
+            border-bottom: 2px solid #e8e8e8;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .nav-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            position: relative;
+            font-weight: 500;
+            transition: all 0.3s;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+        
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+        }
+        
+        .nav-item:hover:not(.active) {
+            background: #f0f7ff;
+        }
+        
+        .info-section {
+            display: none;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f9f9f9;
+            border: 1px solid #e8e8e8;
+            margin-bottom: 20px;
+        }
+        
+        .info-section.active {
+            display: block;
+        }
+        
+        .info-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* 新增的上传按钮样式 */
+        .upload-excel-btn {
+            background: var(--deepseek-color);
+        }
+        
+        .upload-excel-btn:hover {
+            background: #5a2de2;
+        }
+
+        /* 运转方式配置样式 */
+        .operation-config {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .operation-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .operation-title h3 {
+            color: #1890ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pump-config-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .pump-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e8e8e8;
+            transition: all 0.3s;
+        }
+        
+        .pump-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .pump-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .pump-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #52c41a;
+        }
+        
+        .status-indicator.offline {
+            background-color: #ff4d4f;
+        }
+        
+        .pump-config-form {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .form-row-small {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .form-group-small {
+            flex: 1;
+        }
+        
+        .form-group-small label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .form-group-small input, .form-group-small select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* IOT在线测试面板 */
+        .iot-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .iot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .iot-device-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .iot-device {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .iot-device i {
+            font-size: 2.5rem;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .iot-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
+        .iot-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #52c41a;
+        }
+        
+        .iot-status.offline .iot-status-indicator {
+            background-color: #ff4d4f;
+        }
+        
+        .device-data {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .data-item {
+            text-align: center;
+        }
+        
+        .data-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .data-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* 表格样式 */
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .config-table th {
+            background: #f0f7ff;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e8e8e8;
+        }
+        
+        .config-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .config-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .config-table input, .config-table select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .config-table input:focus, .config-table select:focus {
+            border-color: #1890ff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.2);
+        }
+        
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+        
+        .table-header {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            font-weight: 600;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-toolbar {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .table-toolbar button {
+            padding: 6px 12px;
+            border: 1px solid #1890ff;
+            border-radius: 4px;
+            background: white;
+            color: #1890ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .table-toolbar button:hover {
+            background: #1890ff;
+            color: white;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card-header h2 {
+                font-size: 1.2rem;
+            }
+            
+            .config-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .chart-container {
+                height: 450px;
+            }
+            
+            .upload-btn, .iot-btn, .action-btn, .report-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .user-info {
+                position: static;
+                justify-content: center;
+                margin-top: 15px;
+            }
+            
+            .project-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .project-btn {
+                width: 90%;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 15px;
+            }
+            
+            .info-nav {
+                flex-wrap: wrap;
+            }
+            
+            .nav-item {
+                flex: 1;
+                text-align: center;
+                padding: 10px;
+            }
+            
+            .info-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .bottom-button-container {
+                position: static;
+                justify-content: center;
+                margin-top: 20px;
+                padding: 10px;
+            }
+            
+            .curve-controls {
+                flex-direction: column;
+            }
+            
+            .pump-config-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .config-menu {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-chart-network"></i> 能源智能诊断系统</h1>
+            <div class="logo-badge">
+                <span><i class="fas fa-bolt"></i> DeepSeek 集成</span>
+                <span><i class="fas fa-water"></i> 水泵系统诊断</span>
+            </div>
+            <p>结合AI分析与专业知识库，提供精准能源优化解决方案</p>
+        </header>
+        
+        <div class="user-info" id="userInfo">
+            <i class="fas fa-user-circle"></i>
+            <span id="loggedInUser">饶工</span>
+            <button class="action-btn secondary" onclick="logout()" style="padding: 6px 12px; font-size: 0.9rem;">
+                <i class="fas fa-sign-out-alt"></i> 退出
+            </button>
+        </div>
+        
+        <div class="test-project-selector">
+            <h2><i class="fas fa-cogs"></i> 测试项目选择</h2>
+            <div class="project-options">
+                <div class="project-btn active" onclick="selectProject(this, 'pump')">
+                    <i class="fas fa-water"></i>
+                    <span>水泵系统</span>
+                </div>
+                <div class="project-btn" onclick="selectProject(this, 'fan')">
+                    <i class="fas fa-wind"></i>
+                    <span>风机系统</span>
+                </div>
+                <div class="project-btn" onclick="selectProject(this, 'compressor')">
+                    <i class="fas fa-compress"></i>
+                    <span>压缩机系统</span>
+                </div>
+                <div class="project-btn" onclick="selectProject(this, 'cooling')">
+                    <i class="fas fa-fan"></i>
+                    <span>冷却塔系统</span>
+                </div>
+                <div class="project-btn" onclick="selectProject(this, 'heatpump')">
+                    <i class="fas fa-thermometer-half"></i>
+                    <span>热泵系统</span>
+                </div>
+            </div>
+            
+            <!-- 配置菜单容器 -->
+            <div class="config-menu-container" id="configMenu">
+                <div class="config-menu">
+                    <div class="config-menu-item" onclick="showConfigModal('overview')">
+                        <i class="fas fa-project-diagram"></i> 项目概况
+                    </div>
+                    <div class="config-menu-item" onclick="showConfigModal('params')">
+                        <i class="fas fa-plug"></i> 铭牌参数
+                    </div>
+                    <div class="config-menu-item" onclick="showConfigModal('operation')">
+                        <i class="fas fa-cogs"></i> 运转方式
+                    </div>
+                    <div class="config-menu-item" onclick="showConfigModal('curve')">
+                        <i class="fas fa-chart-line"></i> 性能曲线
+                    </div>
+                    <div class="config-menu-item" onclick="showConfigModal('instrument')">
+                        <i class="fas fa-tools"></i> 检测仪表
+                    </div>
+                    <div class="config-menu-item add-feature" onclick="showConfigModal('addFeature')">
+                        <i class="fas fa-plus"></极i> 添加功能
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pump-diagram-container">
+            <h2><i class="fas fa-water"></i> 泵系统能源流测试图</h2>
+            <div class="pump-diagram">
+                <img src="https://rrw1930.github.io/RRW15/" alt="泵系统能源流示意图">
+                <div style="text-align: left; margin-top: 20px; color: #666;">
+                    <p><strong>图例说明：</strong></p>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>输出</strong>: 吐出流量</li>
+                        <li><strong>输入</strong>: 吸入压力(H₅[kPa])</li>
+                        <li><strong>输出</strong>: 吐出压力(H₆[kPa])</li>
+                        <li><strong>输入</strong>: 吸入流量(Qs[m³/min])</li>
+                        <li><strong>输出</strong>: 散热(kW)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-grid">
+            <!-- 数据上传模块 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h2>数据上传中心</h2>
+                </div>
+                <div class="card-content">
+                    <div class="upload-section">
+                        <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" style="display: none;">
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-file-upload"></i> 上传能耗数据文件
+                            </button>
+                            <!-- IOT在线测试按钮 -->
+                            <button class="iot-btn" onclick="toggleIotPanel()">
+                                <i class="fas fa-wifi"></i> IOT在线测试
+                            </button>
+                        </div>
+                        <p style="color: var(--text-light); margin-top: 16px;">支持 CSV/XLSX 格式，单文件最大 100MB</p>
+                        <p style="color: var(--text-light); margin-top: 8px;">文件格式要求：包含时间列和能耗值列</p>
+                    </div>
+                    <div id="uploadStatus"></div>
+                    
+                    <!-- IOT在线测试面板 -->
+                    <div class="iot-panel" id="iotPanel">
+                        <div class="iot-header">
+                            <h3><i class="fas fa-wifi"></i> IOT设备在线监测</h3>
+                            <button class="action-btn" onclick="startIotTest()">
+                                <i class="fas fa-play"></i> 开始测试
+                            </button>
+                        </div>
+                        <div class="iot-device-list">
+                            <div class="iot-device">
+                                <i class="fas fa-microchip"></i>
+                                <h4>压力传感器 #1</h4>
+                                <div class="iot-status">
+                                    <span class="iot-status-indicator"></span>
+                                    <span>在线</span>
+                                </div>
+                                <div class="device-data">
+                                    <div class="data-item">
+                                        <div class="data-value">0.85</div>
+                                        <div class="data-label">MPa</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-value">25°C</div>
+                                        <div class="data-label">温度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="iot-device">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <h4>流量计 #1</h4>
+                                <div class="iot-status">
+                                    <span class="iot-status-indicator"></span>
+                                    <span>在线</span>
+                                </div>
+                                <div class="device-data">
+                                    <div class="data-item">
+                                        <div class="data-value">320</div>
+                                        <div class="data-label">m³/h</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-value">98%</div>
+                                        <div class="data-label">精度</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="iot-device">
+                                <i class="fas fa-bolt"></i>
+                                <h4>电能监测仪</h4>
+                                <div class="iot-status">
+                                    <span class="iot-status-indicator"></span>
+                                    <span>在线</span>
+                                </div>
+                                <div class="device-data">
+                                    <div class="data-item">
+                                        <div class="data-value">185</div>
+                                        <div class="data-label">kW</div>
+                                    </div>
+                                    <div class="data-item">
+                                        <div class="data-value">0.92</div>
+                                        <div class="data-label">功率因数</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文件预览区域 -->
+                    <div id="filePreview" class="file-preview" style="display: none;">
+                        <h3><i class="fas fa-table"></i> 文件预览</h3>
+                        <div id="previewTable"></div>
+                    </div>
+                    
+                    <!-- 能耗曲线图容器 -->
+                    <div class="energy-chart-container" id="energyChart">
+                        <div class="chart-tabs">
+                            <div class="chart-tab active" onclick="selectChartType('inlet_pressure')">吸入压力</div>
+                            <div class="chart-tab" onclick="selectChartType('outlet_pressure')">吐出压力</div>
+                            <div class="chart-tab" onclick="selectChartType('flow')">流量</div>
+                            <div class="chart-tab" onclick="selectChartType('active_power')">有功功率</div>
+                            <div class="chart-tab" onclick="selectChartType('current')">电流</div>
+                            <div class="chart-tab" onclick="selectChartType('inlet_temperature')">进口温度</div>
+                            <div class="chart-tab" onclick="selectChartType('outlet_temperature')">出口温度</div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="chartContainer" style="height: 380px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 水泵运行拟合性能曲线 -->
+        <div class="pump-curve-container">
+            <h3><i class="fas fa-chart-line"></i> 水泵运行拟合性能曲线</h3>
+            <div class="curve-controls">
+                <div class="curve-control-group">
+                    <label for="flowRange">流量范围 (m³/h)</label>
+                    <input type="text" id="flowRange" value="0-100">
+                </div>
+                <div class="curve-control-group">
+                    <label for="headRange">扬程范围 (m)</label>
+                    <input type="text" id="headRange" value="0-50">
+                </div>
+                <div class="curve-control-group">
+                    <label for="efficiencyRange">效率范围 (%)</label>
+                    <input type="text" id="efficiencyRange" value="40-85">
+                </div>
+                <div class="curve-control-group">
+                    <label for="powerRange">功率范围 (kW)</label>
+                    <input type="text" id="powerRange" value="0-100">
+                </div>
+                <button class="action-btn" onclick="generatePumpCurve()">
+                    <i class="fas fa-chart-line"></i> 生成曲线
+                </button>
+            </div>
+            <div id="pumpCurveChart" class="curve-chart"></div>
+        </div>
+
+        <!-- 桑基图模块 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-water"></i>
+                <h2>能源流分析桑基图</h2>
+            </div>
+            <div class="card-content">
+                <div class="sankey-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p><strong>图例说明：</strong> 
+                            <span style="color:#FFD700; font-weight:bold">黄色</span>表示能量输入， 
+                            <span style="color:#32CD32; font-weight:bold">绿色</span>表示有用输出， 
+                            <span style="color:#FF6347; font-weight:bold">红色</span>表示能量损失
+                        </p>
+                        <p>总输入和排烟热损失节点已固定在左侧显示</p>
+                    </div>
+                </div>
+                
+                <div class="config-area">
+                    <div class="config-row">
+                        <div class="config-group">
+                            <label for="unit"><i class="fas fa-ruler"></i> 显示单位：</label>
+                            <select id="unit">
+                                <option value="kJ">kJ</option>
+                                <option value="MJ">MJ</option>
+                                <option value="GJ" selected>GJ</option>
+                            </select>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label for="showPercent"><i class="fas fa-percentage"></i> 显示百分比：</label>
+                            <input type="checkbox" id="showPercent" checked>
+                        </div>
+                        
+                        <div class="config-group">
+                            <label for="showValues"><i class="fas fa-hashtag"></i> 显示数值：</label>
+                            <input type="checkbox" id="showValues" checked>
+                        </div>
+                    </div>
+                    
+                    <!-- 可折叠的数据表格 -->
+                    <button class="collapsible">数据表格</button>
+                    <div class="content">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>来源</th>
+                                    <th>目标</th>
+                                    <th>数值 (kJ)</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataBody"></tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button class="action-btn" onclick="addDataRow()">
+                            <i class="fas fa-plus"></i> 添加行
+                        </button>
+                        <button class="action-btn secondary" onclick="generateSankey()">
+                            <i class="fas fa-sync-alt"></i> 生成桑基图
+                        </button>
+                    </div>
+                </div>
+                <div id="sankeyChart" class="chart-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部按钮容器 -->
+    <div class="bottom-button-container">
+        <button class="report-btn" onclick="generatePDFReport()">
+            <i class="fas fa-file-pdf"></i> 生成PDF报告
+        </button>
+    </div>
+    
+    <footer>
+        <p>能源智能诊断系统 © 2023 | DeepSeek AI | 版本 4.3.0</p>
+        <p>技术支持：DeepSeek AI引擎</p>
+    </footer>
+    
+    <!-- 配置模态框 -->
+    <div id="configModal" class="config-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeConfigModal()">&times;</span>
+            
+            <div class="modal-header">
+                <i class="fas fa-cogs"></i>
+                <h2>水泵系统配置</h2>
+            </div>
+            
+            <div class="info-nav">
+                <div class="nav-item active" onclick="selectInfoTab('overview')">项目概况</div>
+                <div class="nav-item" onclick="selectInfoTab('params')">铭牌参数</div>
+                <div class="nav-item" onclick="selectInfoTab('operation')">运转方式</div>
+                <div class="nav-item" onclick="selectInfoTab('curve')">性能曲线</div>
+                <div class="nav-item" onclick="selectInfoTab('instrument')">检测仪表</div>
+                <div class="nav-item" onclick="selectInfoTab('addFeature')">添加功能</div>
+            </div>
+            
+            <!-- 项目概况 -->
+            <div id="overview" class="info-section active">
+                <div class="table-header">
+                    <div>项目概况配置</div>
+                    <div class="table-toolbar">
+                        <button><i class="fas fa-plus"></i> 添加行</button>
+                        <button><i class="fas fa-download"></i> 导出</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">参数</th>
+                                <th width="70%">值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>项目ID</td>
+                                <td><input type="text" value="PUMP-PJ-001"></td>
+                            </tr>
+                            <tr>
+                                <td>诊断项目编号</td>
+                                <td><input type="text" value="DIAG-202508-HNJG-001"></td>
+                            </tr>
+                            <tr>
+                                <td>诊断项目名称</td>
+                                <td><input type="text" value="循环水系统能效诊断（一期）"></td>
+                            </tr>
+                            <tr>
+                                <td>项目名称</td>
+                                <td><input type="text" value="冷却循环水系统能效提升"></td>
+                            </tr>
+                            <tr>
+                                <td>企业名称</td>
+                                <td><input type="text" value="华南精工有限公司"></td>
+                            </tr>
+                            <tr>
+                                <td>所在区域</td>
+                                <td><input type="text" value="广东省/深圳市/宝安区"></td>
+                            </tr>
+                            <tr>
+                                <td>详细地址</td>
+                                <td><input type="text" value="深圳市宝安区X工业园A栋"></td>
+                            </tr>
+                            <tr>
+                                <td>联系人</td>
+                                <td><input type="text" value="李强"></td>
+                            </tr>
+                            <tr>
+                                <td>联系电话</td>
+                                <td><input type="text" value="13800001234"></td>
+                            </tr>
+                            <tr>
+                                <td>诊断日期</td>
+                                <td><input type="date" value="2025-08-20"></td>
+                            </tr>
+                            <tr>
+                                <td>行业类型</td>
+                                <td>
+                                    <select>
+                                        <option value="工业" selected>工业</option>
+                                        <option value="楼宇">楼宇</option>
+                                        <option value="冶金">冶金</option>
+                                        <option value="化工">化工</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>场景</td>
+                                <td>
+                                    <select>
+                                        <option value="工厂" selected>工厂</option>
+                                        <option value="园区">园区</option>
+                                        <option value="商业楼宇">商业楼宇</option>
+                                        <option value="医院">医院</option>
+                                        <option value="学校">学校</option>
+                                        <option value="数据中心">数据中心</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>项目描述</td>
+                                <td>
+                                    <textarea rows="3" style="width:100%;">针对循环泵系统进行能耗基线建模与节能改造可行性诊断</textarea>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-btn upload-excel-btn" onclick="handleExcelUpload('overview')">
+                        <i class="fas fa-file-excel"></i> 上传Excel文档
+                    </button>
+                    <button class="action-btn" onclick="saveConfig()">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                    <button class="action-btn secondary" onclick="closeConfigModal()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 铭牌参数 -->
+            <div id="params" class="info-section">
+                <div class="table-header">
+                    <div>水泵铭牌参数配置</div>
+                    <div class="table-toolbar">
+                        <button><i class="fas fa-plus"></i> 添加行</button>
+                        <button><i class="fas fa-download"></i> 导出</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">参数</th>
+                                <th width="70%">值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>额定功率(kW)</td>
+                                <td><input type="number" value="185"></td>
+                            </tr>
+                            <tr>
+                                <td>工作电压(V)</td>
+                                <td><input type="number" value="380"></td>
+                            </tr>
+                            <tr>
+                                <td>额定电流(A)</td>
+                                <td><input type="number" value="320"></td>
+                            </tr>
+                            <tr>
+                                <td>额定效率(%)</td>
+                                <td><input type="number" value="92.5"></td>
+                            </tr>
+                            <tr>
+                                <td>制造商</td>
+                                <td><input type="text" value="上海水泵厂"></td>
+                            </tr>
+                            <tr>
+                                <td>设备型号</td>
+                                <td><input type="text" value="IS200-150-400"></td>
+                            </tr>
+                            <tr>
+                                <td>序列号</td>
+                                <td><input type="text" value="SP2023-00456"></td>
+                            </tr>
+                            <tr>
+                                <td>生产日期</td>
+                                <td><input type="date" value="2020-05-15"></td>
+                            </tr>
+                            <tr>
+                                <td>最大流量(m³/h)</td>
+                                <td><input type="number" value="450"></td>
+                            </tr>
+                            <tr>
+                                <td>最大扬程(m)</td>
+                                <td><input type="number" value="65"></td>
+                            </tr>
+                            <tr>
+                                <td>工作温度范围(°C)</td>
+                                <td><input type="text" value="5-80"></td>
+                            </tr>
+                            <tr>
+                                <td>材质</td>
+                                <td>
+                                    <select>
+                                        <option value="不锈钢" selected>不锈钢</option>
+                                        <option value="铸铁">铸铁</option>
+                                        <option value="工程塑料">工程塑料</option>
+                                        <option value="其他">其他</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-btn upload-excel-btn" onclick="handleExcelUpload('params')">
+                        <i class="fas fa-file-excel"></i> 上传Excel文档
+                    </button>
+                    <button class="action-btn" onclick="saveConfig()">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                    <button class="action-btn secondary" onclick="closeConfigModal()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 运转方式 -->
+            <div id="operation" class="info-section">
+                <div class="table-header">
+                    <div>水泵运转方式配置</div>
+                    <div class="table-toolbar">
+                        <button><i class="fas fa-plus"></i> 添加行</button>
+                        <button><i class="fas fa-download"></i> 导出</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">参数</th>
+                                <th width="70%">值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>运转模式</td>
+                                <td>
+                                    <select>
+                                        <option value="parallel" selected>并联运转</option>
+                                        <option value="series">串联运转</option>
+                                        <option value="mixed">混合运转</option>
+                                        <option value="standby">备用运转</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>水泵数量</td>
+                                <td><input type="number" value="5" min="1" max="10"></td>
+                            </tr>
+                            <tr>
+                                <td>控制系统</td>
+                                <td>
+                                    <select>
+                                        <option value="manual">手动控制</option>
+                                        <option value="auto">自动控制</option>
+                                        <option value="frequency">变频控制</option>
+                                        <option value="plc" selected>PLC自动控制</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>运行时间(h/天)</td>
+                                <td><input type="number" value="18"></td>
+                            </tr>
+                            <tr>
+                                <td>峰值流量(m³/h)</td>
+                                <td><input type="number" value="1200"></td>
+                            </tr>
+                            <tr>
+                                <td>谷值流量(m³/h)</td>
+                                <td><input type="number" value="450"></td>
+                            </tr>
+                            <tr>
+                                <td>平均流量(m³/h)</td>
+                                <td><input type="number" value="750"></td>
+                            </tr>
+                            <tr>
+                                <td>系统效率(%)</td>
+                                <td><input type="number" value="72"></td>
+                            </tr>
+                            <tr>
+                                <td>运转方式描述</td>
+                                <td>
+                                    <textarea rows="4" style="width:100%;">系统包含5台主水泵，其中3台工作，2台备用。采用并联运转模式，通过PLC控制系统根据水压自动启停水泵。高峰期运行4台，低负荷期运行2台。</textarea>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-btn upload-excel-btn" onclick="handleExcelUpload('operation')">
+                        <i class="fas fa-file-excel"></i> 上传Excel文档
+                    </button>
+                    <button class="action-btn" onclick="saveConfig()">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                    <button class="action-btn secondary" onclick="closeConfigModal()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 性能曲线 -->
+            <div id="curve" class="info-section">
+                <div class="table-header">
+                    <div>水泵性能曲线配置</div>
+                    <div class="table-toolbar">
+                        <button><i class="fas fa-plus"></i> 添加行</button>
+                        <button><i class="fas fa-download"></i> 导出</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">参数</th>
+                                <th width="70%">值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>上传性能曲线图</td>
+                                <td><input type="file" accept="image/*"></td>
+                            </tr>
+                            <tr>
+                                <td>曲线类型</td>
+                                <td>
+                                    <select>
+                                        <option value="">选择曲线类型</option>
+                                        <option value="flow" selected>流量-扬程曲线</option>
+                                        <option value="efficiency">效率曲线</option>
+                                        <option value="power">功率曲线</option>
+                                        <option value="npsh">NPSH曲线</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>曲线描述</td>
+                                <td>
+                                    <textarea rows="3" style="width:100%;">该曲线显示了水泵在不同流量下的扬程变化，用于评估水泵的工作性能。</textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>测试条件</td>
+                                <td>
+                                    <textarea rows="3" style="width:100%;">测试环境温度：25°C，介质：水，测试压力：常压，测试时间：2023年10月</textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>流量测量点(m³/h)</td>
+                                <td><input type="text" value="0, 50, 100, 150, 200, 250"></td>
+                            </tr>
+                            <tr>
+                                <td>扬程测量点(m)</td>
+                                <td><input type="text" value="50, 48, 45, 40, 35, 30"></td>
+                            </tr>
+                            <tr>
+                                <td>效率测量点(%)</td>
+                                <td><input type="text" value="0, 40, 70, 85, 80, 75"></td>
+                            </tr>
+                            <tr>
+                                <td>功率测量点(kW)</td>
+                                <td><input type="text" value="0, 45, 80, 110, 120, 125"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-btn upload-excel-btn" onclick="handleExcelUpload('curve')">
+                        <i class="fas fa-file-excel"></i> 上传Excel文档
+                    </button>
+                    <button class="action-btn" onclick="saveConfig()">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                    <button class="action-btn secondary" onclick="closeConfigModal()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 检测仪表 -->
+            <div id="instrument" class="info-section">
+                <div class="table-header">
+                    <div>检测仪表配置</div>
+                    <div class="table-toolbar">
+                        <button><i class="fas fa-plus"></i> 添加行</button>
+                        <button><i class="fas fa-download"></i> 导出</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="config-table">
+                        <thead>
+                            <tr>
+                                <th width="30%">参数</th>
+                                <th width="70%">值</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>所需检测仪表</td>
+                                <td>
+                                    <select multiple style="height: 120px; width: 100%;">
+                                        <option value="multimeter" selected>数字万用表</option>
+                                        <option value="clampmeter" selected>钳形电流表</option>
+                                        <option value="thermometer" selected>红外测温仪</option>
+                                        <option value="vibration">振动分析仪</option>
+                                        <option value="pressure" selected>压力传感器</option>
+                                        <option value="flowmeter" selected>流量计</option>
+                                        <option value="poweranalyzer" selected>电能质量分析仪</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>精度要求</td>
+                                <td><input type="text" value="±0.5%"></td>
+                            </tr>
+                            <tr>
+                                <td>校准要求</td>
+                                <td><input type="text" value="所有仪表需在6个月内校准"></td>
+                            </tr>
+                            <tr>
+                                <td>安全要求</td>
+                                <td>
+                                    <textarea rows="3" style="width:100%;">操作人员需穿戴绝缘鞋、安全帽和防护手套。测试前需切断电源并确认设备完全停止运转。</textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>环境要求</td>
+                                <td>
+                                    <textarea rows="2" style="width:100%;">环境温度：5-35°C，相对湿度：30%-80%，无强电磁干扰</textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>检测频率</td>
+                                <td>
+                                    <select>
+                                        <option value="daily">每日</option>
+                                        <option value="weekly">每周</option>
+                                        <option value="monthly" selected>每月</option>
+                                        <option value="quarterly">每季度</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>数据记录格式</td>
+                                <td>
+                                    <select>
+                                        <option value="excel" selected>Excel</option>
+                                        <option value="csv">CSV</option>
+                                        <option value="pdf">PDF</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="action-btn upload-excel-btn" onclick="handleExcelUpload('instrument')">
+                        <i class="fas fa-file-excel"></i> 上传Excel文档
+                    </button>
+                    <button class="action-btn" onclick="saveConfig()">
+                        <i class="fas fa-save"></i> 保存配置
+                    </button>
+                    <button class="action-btn secondary" onclick="closeConfigModal()">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 添加功能 -->
+            <div id="addFeature" class="info-section">
+                <div class="info-form">
+                    <div class="form-group">
+                        <label for="featureName"><i class="fas fa-plus-circle"></i> 功能名称</label>
+                        <input type="text" id="featureName" placeholder="请输入功能名称">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="featureType"><i class="fas fa-list"></i> 功能类型</label>
+                        <select id="featureType">
+                            <option value="">请选择功能类型</option>
+                            <option value="analysis">数据分析</option>
+                            <option value="monitoring">实时监控</option>
+                            <option value="report">报告生成</option>
+                            <option value="alert">预警系统</option>
+                            <option value="integration">系统集成</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="featureDesc"><i class="fas fa-file-alt"></i> 功能描述</label>
+                        <textarea id="featureDesc" rows="4" placeholder="请详细描述功能需求"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority"><i class="fas fa-star"></i> 优先级</label>
+                        <select id="priority">
+                            <option value="low">低</option>
+                            <option value="medium" selected>中</option>
+                            <option value="high">高</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expectedDate"><i class="fas fa-calendar-check"></i> 期望完成日期</label>
+                        <input type="date" id="expectedDate">
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="action-btn" onclick="addNewFeature()">
+                            <i class="fas fa-plus"></i> 添加新功能
+                        </button>
+                        <button class="action-btn secondary" onclick="closeConfigModal()">
+                            <i class="fas fa-times"></i> 取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化桑基图数据
+        const initialData = [
+            {source: "燃气输入", target: "总输入", value: 800000},
+            {source: "电力输入", target: "总输入", value: 200000},
+            {source: "总输入", target: "蒸汽输出", value: 550000},
+            {source: "总输入", target: "排烟热损失", value: 300000},
+            {source: "排烟热损失", target: "显热损失", value: 200000},
+            {source: "排烟热损失", target: "潜热损失", value: 50000},
+            {source: "总输入", target: "壁面散热", value: 50000},
+            {source: "总输入", target: "未完全燃烧", value: 50000}
+        ];
+        
+        // 节点颜色映射
+        const nodeColors = {
+            "输入": "#FFD700",  // 黄色 - 能量输入
+            "输出": "#32CD32",  // 绿色 - 蒸汽输出
+            "损失": "#FF6347",  // 红色 - 损失
+            "default": "#1E90FF" // 默认蓝色
+        };
+        
+        // 当前图表类型
+        let currentChartType = 'inlet_pressure';
+        
+        // 当前选中的项目
+        let currentProject = 'pump';
+        
+        // 初始化桑基图数据表
+        function initializeSankeyData() {
+            const tbody = document.getElementById("dataBody");
+            tbody.innerHTML = initialData.map((row, index) => `
+                <tr>
+                    <td><input type="text" value="${row.source}" class="source"></td>
+                    <td><input type="text" value="${row.target}" class="target"></td>
+                    <td><input type="number" value="${row.value}" class="value"></td>
+                    <td><button onclick="removeDataRow(${index})" style="background: #ff4d4f; color: white; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; transition: all 0.3s;"><i class="fas fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+        }
+        
+        // 添加数据行
+        function addDataRow() {
+            const tbody = document.getElementById("dataBody");
+            const newRow = document.createElement("tr");
+            newRow.innerHTML = `
+                <td><input type="text" value="新来源" class="source"></td>
+                <td><input type="text" value="新目标" class="target"></td>
+                <td><input type="number" value="100000" class="value"></td>
+                <td><button onclick="removeDataRow(${tbody.children.length})" style="background: #ff4d4f; color: white; border: none; border-radius: 6px; padding: 8px 14px; cursor: pointer; transition: all 0.3s;"><i class="fas fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(newRow);
+        }
+        
+        // 移除数据行
+        function removeDataRow(index) {
+            const tbody = document.getElementById("dataBody");
+            if (tbody.children.length > 1) {
+                tbody.removeChild(tbody.children[index]);
+            } else {
+                alert("至少需要保留一行数据");
+            }
+        }
+        
+        // 生成桑基图
+        function generateSankey() {
+            const unit = document.getElementById("unit").value;
+            const showPercent = document.getElementById("showPercent").checked;
+            const showValues = document.getElementById("showValues").checked;
+            
+            // 获取表格数据
+            const rows = Array.from(document.querySelectorAll("#dataBody tr"));
+            const df = rows.map(tr => ({
+                source: tr.querySelector(".source").value.trim(),
+                target: tr.querySelector(".target").value.trim(),
+                value: parseFloat(tr.querySelector(".value").value) || 0
+            }));
+            
+            // 单位转换
+            const unitFactors = { kJ: 1, MJ: 1e-3, GJ: 1e-6 };
+            const factor = unitFactors[unit];
+            const adjustedDF = df.map(d => ({...d, value: d.value * factor}));
+            
+            // 计算节点和链接
+            const allNodes = [...new Set(adjustedDF.flatMap(d => [d.source, d.target]))];
+            const labelIndex = new Map(allNodes.map((label, idx) => [label, idx]));
+            
+            // 计算源节点总输出（用于百分比计算）
+            const sourceTotals = {};
+            adjustedDF.forEach(d => {
+                sourceTotals[d.source] = (sourceTotals[d.source] || 0) + d.value;
+            });
+            
+            // 准备链接数据
+            const links = adjustedDF.map(d => {
+                const percent = showPercent ? `(${(d.value / sourceTotals[d.source] * 100).toFixed(1)}%)` : '';
+                const valueText = showValues ? `${d.value.toLocaleString(undefined, {maximumFractionDigits: 1})}${unit}` : '';
+                return {
+                    source: labelIndex.get(d.source),
+                    target: labelIndex.get(d.target),
+                    value: d.value,
+                    label: `${valueText} ${percent}`.trim(),
+                    color: getNodeColor(d.source) + "99" // 添加透明度
+                };
+            });
+            
+            // 节点颜色分配
+            const nodeColors = allNodes.map(node => getNodeColor(node));
+            
+            // 特殊节点位置设置
+            const nodePositions = {};
+            allNodes.forEach(node => {
+                if (node === "总输入" || node === "排烟热损失") {
+                    nodePositions[node] = {x: 0.1}; // 左侧位置
+                }
+            });
+            
+            // 创建桑基图数据
+            const data = [{
+                type: "sankey",
+                orientation: "h",
+                node: {
+                    pad: 25,
+                    thickness: 30,
+                    line: { width: 0 },
+                    label: allNodes,
+                    color: nodeColors,
+                    x: allNodes.map(node => nodePositions[node]?.x || undefined),
+                    y: allNodes.map(node => nodePositions[node]?.y || undefined),
+                    hovertemplate: '%{label}<br>总流量: %{value:.2f}' + unit
+                },
+                link: {
+                    source: links.map(link => link.source),
+                    target: links.map(link => link.target),
+                    value: links.map(link => link.value),
+                    color: links.map(link => link.color),
+                    label: links.map(link => link.label),
+                    hovertemplate: '%{link.label}'
+                }
+            }];
+            
+            // 布局设置
+            const layout = {
+                title: `能源流向分析（单位：${unit}）`,
+                font: { family: "Microsoft YaHei", size: 14 },
+                margin: { t: 60, l: 50, r: 50, b: 30 },
+                height: 600
+            };
+            
+            // 生成图表
+            Plotly.purge('sankeyChart');
+            Plotly.newPlot('sankeyChart', data, layout);
+        }
+        
+        // 获取节点颜色
+        function getNodeColor(nodeName) {
+            if (nodeName.includes("输入")) return nodeColors["输入"];
+            if (nodeName.includes("蒸汽")) return nodeColors["输出"];
+            if (nodeName.includes("损失") || nodeName.includes("散热")) return nodeColors["损失"];
+            return nodeColors["default"];
+        }
+        
+        // PDF报告生成
+        function generatePDFReport() {
+            // 创建PDF内容定义
+            const docDefinition = {
+                content: [
+                    { 
+                        text: '能源智能诊断报告', 
+                        style: 'header',
+                        alignment: 'center',
+                        margin: [0, 20, 0, 30]
+                    },
+                    {
+                        columns: [
+                            {
+                                text: '客户名称：上海石化\n报告日期：' + new Date().toLocaleDateString(),
+                                style: 'subheader',
+                                width: '50%'
+                            },
+                            {
+                                text: '报告编号：ESR-2023-00876\n诊断工程师：饶工',
+                                style: 'subheader',
+                                width: '50%'
+                            }
+                        ]
+                    },
+                    { 
+                        canvas: [{ type: 'line', x1: 0, y1: 5, x2: 515, y2: 5, lineWidth: 1, lineColor: '#1890ff' }],
+                        margin: [0, 20, 0, 30]
+                    },
+                    { 
+                        text: '诊断摘要', 
+                        style: 'sectionTitle',
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        ul: [
+                            '本月总能耗：85,420 kWh（同比下降12.5%）',
+                            '单位产值能耗：0.68 kWh/元（行业基准0.78）',
+                            '能源成本占比：总生产成本15.2%',
+                            '综合能效评分：92分（满分100）'
+                        ],
+                        margin: [0, 0, 0, 20]
+                    },
+                    { 
+                        text: '水泵系统优化点', 
+                        style: 'sectionTitle',
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        table: {
+                            widths: ['*', '*'],
+                            body: [
+                                [
+                                    {text: '优化点', style: 'tableHeader'},
+                                    {text: '详情与建议', style: 'tableHeader'}
+                                ],
+                                [
+                                    '水泵并联效率', 
+                                    '当前并联效率85%（目标≥92%），建议调整水泵匹配度'
+                                ],
+                                [
+                                    '峰谷运行策略', 
+                                    '谷电利用率68%（目标≥80%），建议增加谷电时段运行比例'
+                                ],
+                                [
+                                    '设备维护周期', 
+                                    '3号水泵已运行8,500小时，建议进行维护保养'
+                                ],
+                                [
+                                    '变频控制优化', 
+                                    '变频器调节范围可进一步优化，预计节能8%'
+                                ]
+                            ]
+                        },
+                        layout: {
+                            hLineWidth: function(i, node) { return i === 0 || i === node.table.body.length ? 1.5 : 0.5; },
+                            vLineWidth: () => 0.5,
+                            hLineColor: () => '#1890ff',
+                            vLineColor: () => '#1890ff',
+                            paddingTop: (i) => i === 0 ? 8 : 5,
+                            paddingBottom: (i, node) => (i === node.table.body.length - 1) ? 8 : 5,
+                            paddingLeft: 10,
+                            paddingRight: 10
+                        },
+                        margin: [0, 0, 0, 20]
+                    },
+                    { 
+                        text: '优化建议', 
+                        style: 'sectionTitle',
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        ol: [
+                            '实施智能水泵启停控制，预计节能10-15%',
+                            '优化水泵并联运行组合，提高系统效率',
+                            '申请政府节能改造补贴，降低投资成本',
+                            '建立水泵能效监控平台，实现实时监控',
+                            '开展员工节能操作培训，提高操作水平'
+                        ],
+                        margin: [0, 0, 0, 30]
+                    },
+                    { 
+                        text: '预期效益', 
+                        style: 'sectionTitle',
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        columns: [
+                            {
+                                text: '年度节能潜力：\n18-25%',
+                                style: 'benefitBox',
+                                width: '33%'
+                            },
+                            {
+                                text: '成本回收周期：\n1.2-1.8年',
+                                style: 'benefitBox',
+                                width: '33%'
+                            },
+                            {
+                                text: '减排效益：\n180吨CO₂/年',
+                                style: 'benefitBox',
+                                width: '33%'
+                            }
+                        ]
+                    }
+                ],
+                styles: {
+                    header: { 
+                        fontSize: 24, 
+                        bold: true, 
+                        color: '#1890ff'
+                    },
+                    subheader: { 
+                        fontSize: 12, 
+                        color: '#666'
+                    },
+                    sectionTitle: { 
+                        fontSize: 16, 
+                        bold: true, 
+                        color: '#096dd9',
+                        background: '#e6f7ff',
+                        padding: [5, 10]
+                    },
+                    tableHeader: {
+                        bold: true,
+                        fontSize: 12,
+                        color: 'black',
+                        background: '#f0f7ff'
+                    },
+                    benefitBox: {
+                        background: '#e6fffb',
+                        border: [1, '#87e8de'],
+                        borderRadius: 5,
+                        padding: 10,
+                        alignment: 'center',
+                        bold: true,
+                        fontSize: 14
+                    }
+                },
+                pageMargins: [40, 60, 40, 60],
+                defaultStyle: {
+                    font: 'Helvetica'
+                }
+            };
+            
+            // 生成PDF并下载
+            try {
+                const pdfDoc = pdfMake.createPdf(docDefinition);
+                pdfDoc.getBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '水泵系统诊断报告_' + new Date().toISOString().slice(0,10) + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // 显示下载通知
+                    showDownloadNotification('报告已生成！PDF报告已开始下载', '#52c41a');
+                });
+            } catch (error) {
+                console.error('PDF生成失败:', error);
+                showDownloadNotification('PDF生成失败，请重试', '#ff4d4f');
+            }
+        }
+        
+        // 显示下载通知
+        function showDownloadNotification(message, color) {
+            const notification = document.createElement('div');
+            notification.className = 'download-notification';
+            notification.style.background = color;
+            notification.innerHTML = `
+                <i class="fas ${color === '#52c41a' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                <div>
+                    <strong>${message}</strong>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后移除通知
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // 文件上传处理
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(1);
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                
+                // 检查文件类型
+                const validExtensions = ['csv', 'xlsx', 'xls'];
+                if (!validExtensions.includes(fileExtension)) {
+                    showDownloadNotification('仅支持CSV或Excel文件', '#faad14');
+                    return;
+                }
+                
+                // 检查文件大小
+                if (file.size > 100 * 1024 * 1024) { // 100MB
+                    showDownloadNotification('文件大小超过100MB限制', '#ff4d4f');
+                    return;
+                }
+                
+                document.getElementById('uploadStatus').innerHTML = `
+                    <div class="status-success">
+                        <i class="fas fa-check-circle"></i>
+                        成功上传 ${file.name}（${fileSize}MB）
+                    </div>
+                `;
+                
+                // 显示文件预览区域
+                document.getElementById('filePreview').style.display = 'block';
+                
+                // 解析文件并生成图表
+                parseFile(file, fileExtension);
+            }
+        });
+        
+        // 解析上传的文件
+        function parseFile(file, extension) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    if (extension === 'csv') {
+                        parseCSV(e.target.result);
+                    } else {
+                        parseExcel(e.target.result);
+                    }
+                } catch (error) {
+                    console.error('文件解析失败:', error);
+                    document.getElementById('uploadStatus').innerHTML = `
+                        <div style="color: var(--error-color); margin-top: 16px;">
+                            <i class="fas fa-exclamation-triangle"></i> 文件解析失败: ${error.message}
+                        </div>
+                    `;
+                }
+            };
+            
+            reader.onerror = function() {
+                showDownloadNotification('文件读取失败', '#ff4d4f');
+            };
+            
+            if (extension === 'csv') {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+        
+        // 解析CSV文件
+        function parseCSV(csvData) {
+            Papa.parse(csvData, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.errors.length > 0) {
+                        throw new Error('CSV解析错误: ' + results.errors[0].message);
+                    }
+                    
+                    // 显示预览表格
+                    displayPreviewTable(results.data);
+                    
+                    // 提取数据并生成图表
+                    const timeData = results.data.map(row => row['时间'] || row['timestamp'] || row['日期']);
+                    const energyData = results.data.map(row => parseFloat(row['能耗'] || row['能耗值'] || row['energy']));
+                    
+                    if (timeData.length === 0 || energyData.length === 0) {
+                        throw new Error('未找到时间或能耗数据列');
+                    }
+                    
+                    generateChart(timeData, energyData);
+                }
+            });
+        }
+        
+        // 解析Excel文件
+        function parseExcel(excelData) {
+            try {
+                const workbook = XLSX.read(excelData, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 2) {
+                    throw new Error('Excel文件数据不足');
+                }
+                
+                // 提取表头
+                const headers = jsonData[0];
+                
+                // 查找时间列和能耗列
+                const timeIndex = headers.findIndex(header => 
+                    ['时间', '日期', 'timestamp', 'date'].includes(header.toString().toLowerCase())
+                );
+                
+                const energyIndex = headers.findIndex(header => 
+                    ['能耗', '能耗值', 'energy', 'power'].includes(header.toString().toLowerCase())
+                );
+                
+                if (timeIndex === -1 || energyIndex === -1) {
+                    throw new Error('未找到时间或能耗数据列');
+                }
+                
+                // 提取数据
+                const timeData = [];
+                const energyData = [];
+                
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row[timeIndex] && row[energyIndex]) {
+                        timeData.push(row[timeIndex]);
+                        energyData.push(parseFloat(row[energyIndex]));
+                    }
+                }
+                
+                if (timeData.length === 0 || energy极Data.length === 0) {
+                    throw new Error('未找到有效的时间或能耗数据');
+                }
+                
+                // 显示预览表格
+                displayPreviewTable(jsonData.slice(0, 11)); // 显示前10行数据
+                
+                // 生成图表
+                generateChart(timeData, energyData);
+            } catch (error) {
+                throw new Error('Excel解析错误: ' + error.message);
+            }
+        }
+        
+        // 显示预览表格
+        function displayPreviewTable(data) {
+            const previewTable = document.getElementById('previewTable');
+            
+            if (Array.isArray(data) && data.length > 0) {
+                let tableHTML = '<table class="file-preview"><thead><tr>';
+                
+                // 表头
+                const headers = data[0];
+                headers.forEach(header => {
+                    tableHTML += `<th>${header}</th>`;
+                });
+                tableHTML += '</tr></thead><tbody>';
+                
+                // 数据行（最多显示10行）
+                const rowCount = Math.min(data.length, 11);
+                for (let i = 1; i < rowCount; i++) {
+                    tableHTML += '<tr>';
+                    data[i].forEach(cell => {
+                        tableHTML += `<td>${cell}</td>`;
+                    });
+                    tableHTML += '</tr>';
+                }
+                
+                tableHTML += '</tbody></table>';
+                previewTable.innerHTML = tableHTML;
+            }
+        }
+        
+        // 生成能耗图表
+        function generateChart(timeData, energyData) {
+            // 创建图表数据
+            const chartData = [{
+                x: timeData,
+                y: energyData,
+                name: '能耗数据',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#1890ff' }
+            }];
+            
+            // 图表布局
+            const layout = {
+                title: '能耗曲线图',
+                xaxis: { title: '时间' },
+                yaxis: { title: '能耗值 (kWh)' },
+                margin: { t: 50, l: 60, r: 30, b: 60 },
+                showlegend: true,
+                legend: { x: 0.8, y: 0.1 },
+                font: { family: 'Microsoft YaHei', size: 14 }
+            };
+            
+            // 生成图表
+            Plotly.newPlot('chartContainer', chartData, layout);
+        }
+        
+        // 生成模拟数据图表
+        function generateSimulatedChart() {
+            // 生成时间序列 (0-19)
+            const timeData = Array.from({length: 20}, (_, i) => i);
+            
+            let chartData, layout;
+            
+            // 根据当前图表类型生成不同的模拟曲线
+            switch(currentChartType) {
+                case 'inlet_pressure':
+                    // 进口压力：正弦波曲线
+                    const inletPressure = timeData.map(t => 50 + 30 * Math.sin(2 * Math.PI * t / 20));
+                    chartData = [{
+                        x: timeData,
+                        y: inletPressure,
+                        name: '吸入压力',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#1890ff' }
+                    }];
+                    layout = {
+                        title: '吸入压力曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '压力 (kPa)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'outlet_pressure':
+                    // 出口压力：带噪声的余弦波曲线
+                    const outletPressure = timeData.map(t => {
+                        const noise = (Math.random() * 10) - 5; // -5到5之间的随机噪声
+                        return 80 + 40 * Math.cos(2 * Math.PI * t / 20) + noise;
+                    });
+                    chartData = [{
+                        x: timeData,
+                        y: outletPressure,
+                        name: '吐出压力',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#ff6b6b' }
+                    }];
+                    layout = {
+                        title: '吐出压力曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '压力 (kPa)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'flow':
+                    // 流量：随时间线性增长曲线
+                    const flowData = timeData.map(t => 10 + 2 * t);
+                    chartData = [{
+                        x: timeData,
+                        y: flowData,
+                        name: '流量',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#52c41a' }
+                    }];
+                    layout = {
+                        title: '流量曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '流量 (m³/h)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'active_power':
+                    // 有功功率：二次函数曲线
+                    const activePower = timeData.map(t => 0.5 * Math.pow(t-10, 2) + 50);
+                    chartData = [{
+                        x: timeData,
+                        y: activePower,
+                        name: '有功功率',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#faad14' }
+                    }];
+                    layout = {
+                        title: '有功功率曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '功率 (kW)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'current':
+                    // 电流：随机波动曲线
+                    let currentValue = 100;
+                    const currentData = timeData.map(t => {
+                        const randomChange = (Math.random() * 20) - 10; // -10到10之间的随机变化
+                        currentValue += randomChange;
+                        return currentValue;
+                    });
+                    chartData = [{
+                        x: timeData,
+                        y: currentData,
+                        name: '电流',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#6e44ff' }
+                    }];
+                    layout = {
+                        title: '电流曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '电流 (A)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'inlet_temperature':
+                    // 进口温度：缓慢上升曲线
+                    const inletTemperature = timeData.map(t => 25 + 0.5 * t);
+                    chartData = [{
+                        x: timeData,
+                        y: inletTemperature,
+                        name: '进口温度',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#ff9f43' }
+                    }];
+                    layout = {
+                        title: '进口温度曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '温度 (°C)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                case 'outlet_temperature':
+                    // 出口温度：缓慢下降曲线
+                    const outletTemperature = timeData.map(t => 60 - 0.3 * t);
+                    chartData = [{
+                        x: timeData,
+                        y: outletTemperature,
+                        name: '出口温度',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#ff6384' }
+                    }];
+                    layout = {
+                        title: '出口温度曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '温度 (°C)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+                    break;
+                    
+                default:
+                    // 默认显示进口压力
+                    const defaultData = timeData.map(t => 50 + 30 * Math.sin(2 * Math.PI * t / 20));
+                    chartData = [{
+                        x: timeData,
+                        y: defaultData,
+                        name: '吸入压力',
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        line: { color: '#1890ff' }
+                    }];
+                    layout = {
+                        title: '吸入压力曲线',
+                        xaxis: { title: '时间 (分钟)' },
+                        yaxis: { title: '压力 (kPa)' },
+                        margin: { t: 50, l: 60, r: 30, b: 60 },
+                        showlegend: true,
+                        legend: { x: 0.8, y: 0.1 },
+                        font: { family: 'Microsoft YaHei', size: 14 }
+                    };
+            }
+            
+            // 生成图表
+            Plotly.purge('chartContainer');
+            Plotly.newPlot('chartContainer', chartData, layout);
+        }
+        
+        // 选择图表类型
+        function selectChartType(type) {
+            currentChartType = type;
+            
+            // 更新标签页状态
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 设置当前标签为活动状态
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                if (tab.textContent === getChartTypeLabel(type)) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // 生成模拟图表
+            generateSimulatedChart();
+        }
+        
+        // 获取图表类型的中文标签
+        function getChartTypeLabel(type) {
+            const labels = {
+                'inlet_pressure': '吸入压力',
+                'outlet_pressure': '吐出压力',
+                'flow': '流量',
+                'active_power': '有功功率',
+                'current': '电流',
+                'inlet_temperature': '进口温度',
+                'outlet_temperature': '出口温度'
+            };
+            
+            return labels[type] || '吸入压力';
+        }
+        
+        // 退出功能
+        function logout() {
+            window.location.href = 'index.html';
+        }
+        
+        // 折叠面板功能
+        document.querySelectorAll('.collapsible').forEach(button => {
+            button.addEventListener('click', function() {
+                this.classList.toggle("active");
+                const content = this.nextElementSibling;
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                } else {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                } 
+            });
+        });
+        
+        // 选择测试项目
+        function selectProject(button, project) {
+            // 移除所有按钮的活动状态
+            document.querySelectorAll('.project-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 添加当前按钮的活动状态
+            button.classList.add('active');
+            
+            // 记录当前项目
+            currentProject = project;
+            
+            // 更新图表标题
+            const titles = {
+                pump: "泵系统能源流测试图",
+                fan: "风机系统能源流测试图",
+                compressor: "压缩机系统能源流测试图",
+                cooling: "冷却塔系统能源流测试图",
+                heatpump: "热泵系统能源流测试图"
+            };
+            
+            const icons = {
+                pump: "fa-water",
+                fan: "fa-wind",
+                compressor: "fa-compress",
+                cooling: "fa-fan",
+                heatpump: "fa-thermometer-half"
+            };
+            
+            document.querySelector('.pump-diagram-container h2').innerHTML = 
+                `<i class="fas ${icons[project]}"></i> ${titles[project]}`;
+            
+            // 显示配置菜单
+            document.getElementById('configMenu').style.display = 'block';
+            
+            // 这里可以添加根据项目类型切换不同图表的功能
+            showDownloadNotification(`已切换到${titles[project]}`, '#1890ff');
+        }
+        
+        // 显示配置模态框
+        function showConfigModal(tabId) {
+            const modal = document.getElementById('configModal');
+            modal.style.display = 'block';
+            selectInfoTab(tabId);
+        }
+        
+        // 关闭配置模态框
+        function closeConfigModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+        
+        // 选择信息标签页
+        function selectInfoTab(tabId) {
+            // 隐藏所有信息区域
+            document.querySelectorAll('.info-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 移除所有标签页的活动状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 显示选中的信息区域
+            document.getElementById(tabId).classList.add('active');
+            
+            // 设置标签页活动状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                if (item.getAttribute('onclick').includes(tabId)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // 保存配置
+        function saveConfig() {
+            showDownloadNotification('配置已成功保存', '#52c41a');
+            setTimeout(closeConfigModal, 1500);
+        }
+        
+        // 生成水泵性能曲线
+        function generatePumpCurve() {
+            // 生成模拟数据
+            const flow = [];
+            const head = [];
+            const efficiency = [];
+            const power = [];
+            
+            for (let i = 0; i <= 100; i += 5) {
+                flow.push(i);
+                head.push(50 - 0.3 * i);
+                efficiency.push(40 + 0.4 * i - 0.003 * i * i);
+                power.push(10 + 0.2 * i);
+            }
+            
+            // 创建曲线数据
+            const traceHead = {
+                x: flow,
+                y: head,
+                name: '扬程 (m)',
+                yaxis: 'y1',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#1890ff' }
+            };
+            
+            const traceEfficiency = {
+                x: flow,
+                y: efficiency,
+                name: '效率 (%)',
+                yaxis: 'y2',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#52c41a' }
+            };
+            
+            const tracePower = {
+                x: flow,
+                y: power,
+                name: '功率 (kW)',
+                yaxis: 'y3',
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: { color: '#ff6b6b' }
+            };
+            
+            const data = [traceHead, traceEfficiency, tracePower];
+            
+            // 布局设置
+            const layout = {
+                title: '水泵性能曲线',
+                xaxis: { title: '流量 (m³/h)' },
+                yaxis: {
+                    title: '扬程 (m)',
+                    titlefont: { color: '#1890ff' },
+                    tickfont: { color: '#1890ff' }
+                },
+                yaxis2: {
+                    title: '效率 (%)',
+                    titlefont: { color: '#52c41a' },
+                    tickfont: { color: '#52c41a' },
+                    overlaying: 'y',
+                    side: 'right'
+                },
+                yaxis3: {
+                    title: '功率 (kW)',
+                    titlefont: { color: '#ff6b6b' },
+                    tickfont: { color: '#ff6b6b' },
+                    anchor: 'free',
+                    overlaying: 'y',
+                    side: 'right',
+                    position: 1
+                },
+                margin: { t: 60, l: 60, r: 100, b: 60 },
+                showlegend: true,
+                legend: { x: 0.8, y: 0.1 },
+                font: { family: 'Microsoft YaHei', size: 14 }
+            };
+            
+            // 生成图表
+            Plotly.newPlot('pumpCurveChart', data, layout);
+        }
+        
+        // 处理Excel上传
+        function handleExcelUpload(section) {
+            // 创建文件输入元素
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.xlsx, .xls';
+            
+            // 添加事件监听器
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const fileSize = (file.size / 1024 / 1024).toFixed(1);
+                    
+                    if (file.size > 10 * 1024 * 1024) { // 10MB
+                        showDownloadNotification('文件大小超过10MB限制', '#ff4d4f');
+                        return;
+                    }
+                    
+                    // 显示上传成功消息
+                    showDownloadNotification(`成功上传${section}配置文档: ${file.name} (${fileSize}MB)`, '#52c41a');
+                    
+                    // 这里可以添加实际解析Excel文件的逻辑
+                    // 例如: parseConfigExcel(file, section);
+                }
+            });
+            
+            // 触发文件选择对话框
+            fileInput.click();
+        }
+        
+        // 显示/隐藏IOT面板
+        function toggleIotPanel() {
+            const iotPanel = document.getElementById('iotPanel');
+            if (iotPanel.style.display === 'block') {
+                iotPanel.style.display = 'none';
+            } else {
+                iotPanel.style.display = 'block';
+            }
+        }
+        
+        // 开始IOT测试
+        function startIotTest() {
+            showDownloadNotification('开始IOT在线测试，正在连接设备...', '#1890ff');
+            
+            // 模拟设备数据更新
+            setTimeout(() => {
+                document.querySelectorAll('.iot-device .data-value').forEach((el, index) => {
+                    const randomValue = (Math.random() * 20) + (index * 50);
+                    el.textContent = Math.round(randomValue);
+                });
+                showDownloadNotification('设备连接成功，实时数据已更新', '#52c41a');
+            }, 2000);
+        }
+        
+        // 添加新功能
+        function addNewFeature() {
+            const featureName = document.getElementById('featureName').value;
+            if (!featureName) {
+                showDownloadNotification('请填写功能名称', '#faad14');
+                return;
+            }
+            
+            showDownloadNotification(`新功能"${featureName}"已添加成功`, '#52c41a');
+            closeConfigModal();
+        }
+        
+        // 初始化执行
+        initializeSankeyData();
+        generateSankey();
+        generatePumpCurve();
+        
+        // 初始生成模拟图表
+        generateSimulatedChart();
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('configModal');
+            if (event.target == modal) {
+                closeConfigModal();
+            }
+        }
+    </script>
+</body>
+</html>
